@@ -12,14 +12,14 @@ A VSCode extension providing a powerful buffer search interface with keyboard-ce
 
 | Command                                 | Key         | Description                          |
 |------------------------------------------|-------------|--------------------------------------|
-| Move selection up in search list         | Up / Ctrl+K | Move selection up                    |
-| Move selection down in search list       | Down / Ctrl+J | Move selection down                  |
-| Page down in search list                 | Ctrl+F      | Page down                            |
-| Page up in search list                   | Ctrl+B      | Page up                              |
+| Move selection up in search list         | Up / Ctrl+k | Move selection up                    |
+| Move selection down in search list       | Down / Ctrl+j | Move selection down                  |
+| Page down in search list                 | Ctrl+f      | Page down                            |
+| Page up in search list                   | Ctrl+b      | Page up                              |
 | Jump to selected item in search list     | Enter       | Jump to selected item                |
 | Page left in search list                 | Left        | Page left                            |
 | Page right in search list                | Right       | Page right                           |
-| Move search directory up one level       | Ctrl+A      | Move directory up (in input box)     |
+| Move search directory up one level       | Ctrl+h      | Move directory up (in input box)     |
 | Close buffer search                      | Escape      | Close the buffer search              |
 
 ## Installation
@@ -31,13 +31,13 @@ A VSCode extension providing a powerful buffer search interface with keyboard-ce
 
 ## Usage
 
-- Activate the buffer search via the command palette (`Buffer Search`).
+- Activate the buffer search via the command palette (`vscode-rg: FindGrep`).
 - Use the keyboard shortcuts to navigate and select items.
 - The extension is active when the buffer search is open.
 
 ## Requirements
 
-- Visual Studio Code version 1.101.0 or higher.
+- Visual Studio Code version 1.99.0 or higher.
 
 ## License
 
