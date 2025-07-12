@@ -1,0 +1,154 @@
+{
+  "name": "vscode-rg",
+  "displayName": "vscode-rg",
+  "description": "vscode-rg is a VSCode extension for fast, keyboard-centric recursive content search (find+grep). Specify a directory and search file contents efficiently with a powerful UI and shortcuts.",
+  "version": "0.0.1",
+  "publisher": "crimair",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crimair/vscode-rg"
+  },
+  "bugs": {
+    "url": "https://github.com/crimair/vscode-rg/issues"
+  },
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "rg",
+    "ag",
+    "grep"
+  ],
+  "activationEvents": [
+    "onCommand:vscode-rg.findgrep"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-rg.findgrep",
+        "title": "vscode-rg: FindGrep (recursive content search)"
+      },
+      {
+        "command": "vscode-rg.findgrep.up",
+        "title": "vscode-rg: Move selection up in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.down",
+        "title": "vscode-rg: Move selection down in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.pageDown",
+        "title": "vscode-rg: Page down in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.pageUp",
+        "title": "vscode-rg: Page up in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.jump",
+        "title": "vscode-rg: Jump to selected item in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.left",
+        "title": "vscode-rg: Page left in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.right",
+        "title": "vscode-rg: Page right in search list"
+      },
+      {
+        "command": "vscode-rg.findgrep.pathLevelUp",
+        "title": "vscode-rg: Move search directory up one level"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vscode-rg.findgrep.up",
+        "key": "up",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.down",
+        "key": "down",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.up",
+        "key": "ctrl+k",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.down",
+        "key": "ctrl+j",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.pageDown",
+        "key": "ctrl+f",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.pageUp",
+        "key": "ctrl+b",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.left",
+        "key": "left",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.right",
+        "key": "right",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.jump",
+        "key": "enter",
+        "when": "vscodeRg.findgrep.active"
+      },
+      {
+        "command": "vscode-rg.findgrep.close",
+        "key": "escape",
+        "when": "vscodeRg.findgrep.active"
+      } ,
+      {
+        "command": "vscode-rg.findgrep.pathLevelUp",
+        "key": "ctrl+h",
+        "when": "vscodeRg.autocompletedInputBox.active"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "copy-webpack-plugin": "^13.0.0",
+    "eslint": "^9.16.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.7.2",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "preview": true
+}
