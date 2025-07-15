@@ -1,4 +1,5 @@
 // VSCode WebView クライアントスクリプト (TypeScript移植)
+import { highlightMatch } from './highlightMatch';
 
 declare function acquireVsCodeApi(): {
   postMessage: (msg: any) => void;
@@ -261,7 +262,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const textSpan = document.createElement('span');
       textSpan.className = 'result-text';
-      textSpan.innerHTML = ': ' + highlightMatch(hit.text, input.value);
+      const highlighted = highlightMatch(hit.text, input.value);
+      console.log('[VSAGLOG][highlightMatch]', { text: hit.text, query: input.value, highlighted });
+      textSpan.innerHTML = ': ' + highlighted;
 
       div.appendChild(fileSpan);
       div.appendChild(lineSpan);
@@ -279,20 +282,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 検索ワードにマッチした部分をハイライト
-  // 検索ワードに大文字が含まれていればcase sensitive、なければignoreCase
-  function highlightMatch(text: string, query: string): string {
-    if (!query) return text;
-    function esc(s: string) {
-      return s.replace(/[.*+?^${'$'}()|[\]\\]/g, '\\$&');
-    }
-    const pattern = esc(query);
-    const hasUpper = /[A-Z]/.test(query);
-    const flags = hasUpper ? 'g' : 'gi';
-    return text.replace(new RegExp(pattern, flags), match =>
-      `<span class="highlight-match">${match}</span>`
-    );
-  }
 
   function jumpToSelected() {
     const startIdx = currentPage * PAGE_SIZE;
