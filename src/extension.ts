@@ -82,61 +82,69 @@ export function activate(context: vscode.ExtensionContext) {
   panel.webview.onDidReceiveMessage(async message => {
       console.log('--- Message received from webview ---', message);
       if (message.type === 'search') {
+        // --- 検索ID対応・プロセス管理 ---
+        const searchId = message.id;
         const query = message.query;
         const options = message.options || {};
         if (!query || query.trim() === '') {
-          panel.webview.postMessage({ type: 'result', results: [] });
+          panel.webview.postMessage({ type: 'clearResults', id: searchId });
           return;
         }
         const fs = require('fs');
         if (!fs.existsSync(dir)) {
-          panel.webview.postMessage({ type: 'result', results: [], error: `Directory does not exist: ${dir}` });
+          panel.webview.postMessage({ type: 'clearResults', id: searchId });
+          panel.webview.postMessage({ type: 'appendResult', id: searchId, data: `ERROR: Directory does not exist: ${dir}` });
           return;
         }
-        const { exec } = require('child_process');
+
+        // プロセス管理用
+        // プロセス管理用（型安全にanyで拡張）
+        const anyPanel = panel as any;
+        if (!anyPanel._searchProcs) anyPanel._searchProcs = {};
+        // 既存プロセスkill
+        if (anyPanel._searchProcs.current && !anyPanel._searchProcs.current.killed) {
+          anyPanel._searchProcs.current.kill();
+        }
+
+        const { spawn } = require('child_process');
         let rgFlags = ['--vimgrep', '--no-heading', '--color', 'never', '-S', '--regexp'];
-        const rgCmd = `rg ${rgFlags.join(' ')} "${query.replace(/"/g, '\\"')}" "${dir}" | head -n 1000`;
-        exec(rgCmd, (err: Error | null, stdout: string, stderr: string) => {
-          console.log('--- rg command execution ---');
-          console.log('Command:', rgCmd);
-          console.log('stdout:', stdout);
-          console.log('stderr:', stderr);
-          if (err) {
-            console.error('Error:', err);
-            panel.webview.postMessage({ type: 'result', results: [], error: stderr || err.message });
-            return;
-          }
-          const results: { file: string, line: number, col: number, text: string }[] = [];
-          (stdout as string)
-            .split('\n')
-            .filter((line: string) => {
-              // スニペット表示時は空行や--区切りを除外
-              if (options.snippet) {
-                return line.match(/^(.*?):(\d+):(\d+):(.*)$/);
-              }
-              return line;
-            })
-            .forEach((line: string) => {
-              const m = line.match(/^(.*?):(\d+):(\d+):(.*)$/);
-              if (m) {
-                results.push({
-                  file: path.relative(dir, m[1]),
-                  line: Number(m[2]),
-                  col: Number(m[3]),
-                  text: m[4]
-                });
-              }
-            });
-          // {file, line, col, text}[] → {file, items: [{line, col, text}]}[] に変換
-          const grouped: { [file: string]: { file: string, items: { line: number, col: number, text: string }[] } } = {};
-          results.forEach(hit => {
-            if (!grouped[hit.file]) {
-              grouped[hit.file] = { file: hit.file, items: [] };
+        const rgCmdArgs = [...rgFlags, query, dir];
+        const rgProc = spawn('rg', rgCmdArgs);
+
+        anyPanel._searchProcs.current = rgProc;
+
+        // 検索結果クリア
+        panel.webview.postMessage({ type: 'clearResults', id: searchId });
+
+        rgProc.stdout.setEncoding('utf8');
+        let buffer = '';
+        rgProc.stdout.on('data', (data: string) => {
+          buffer += data;
+          let lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            // 整形ロジックは既存と同じ正規表現
+            if (options.snippet && !line.match(/^(.*?):(\d+):(\d+):(.*)$/)) continue;
+            // ファイルパスをdirからの相対パスに変換
+            const m = line.match(/^(.*?):(\d+):(\d+):(.*)$/);
+            let sendLine = line;
+            if (m) {
+              const relFile = path.relative(dir, m[1]);
+              sendLine = `${relFile}:${m[2]}:${m[3]}:${m[4]}`;
             }
-            grouped[hit.file].items.push({ line: hit.line, col: hit.col, text: hit.text });
-          });
-          const groupedResults = Object.values(grouped);
-          panel.webview.postMessage({ type: 'result', results: groupedResults });
+            panel.webview.postMessage({ type: 'appendResult', id: searchId, data: sendLine });
+          }
+        });
+        rgProc.stdout.on('end', () => {
+          // 終了時に何か必要ならここで
+        });
+        rgProc.stderr.setEncoding('utf8');
+        rgProc.stderr.on('data', (err: string) => {
+          panel.webview.postMessage({ type: 'appendResult', id: searchId, data: `ERROR: ${err}` });
+        });
+        rgProc.on('close', (code: number) => {
+          // 検索終了時に必要ならここで
         });
       } else if (message.type === 'jump') {
         let file = message.file;

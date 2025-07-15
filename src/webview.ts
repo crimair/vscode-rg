@@ -19,32 +19,36 @@ window.addEventListener('DOMContentLoaded', () => {
     // スタイルはextension.ts側で付与するため、ここでの<style>挿入は不要
 
     const vscode = acquireVsCodeApi();
-  const input = document.querySelector<HTMLInputElement>('.search-input')!;
-  // 初期検索ワードをセット
-  // @ts-ignore
-  input.value = (window as any).initialQuery || '';
-  const resultList = document.querySelector<HTMLDivElement>('.result-list')!;
-  // ディレクトリパス表示行を取得
-  const dirRow = document.getElementById('search-dir-row');
-  // ナビ用divを作成し右側に配置
-  const navDiv = document.createElement('span');
-  navDiv.id = 'page-nav';
-  navDiv.className = 'page-nav';
-  if (dirRow) dirRow.appendChild(navDiv);
+    const input = document.querySelector<HTMLInputElement>('.search-input')!;
+    // 初期検索ワードをセット
+    // @ts-ignore
+    input.value = (window as any).initialQuery || '';
+    const resultList = document.querySelector<HTMLDivElement>('.result-list')!;
+    // ディレクトリパス表示行を取得
+    const dirRow = document.getElementById('search-dir-row');
+    // ナビ用divを作成し右側に配置
+    const navDiv = document.createElement('span');
+    navDiv.id = 'page-nav';
+    navDiv.className = 'page-nav';
+    if (dirRow) dirRow.appendChild(navDiv);
 
-  let results: SearchResult[] = [];
-  let flatHits: SearchHit[] = [];
-  let selectedIdx = 0;
-  let currentPage = 0;
-  const PAGE_SIZE = 50;
+    let results: SearchResult[] = [];
+    let flatHits: SearchHit[] = [];
+    let selectedIdx = 0;
+    let currentPage = 0;
+    const PAGE_SIZE = 50;
 
-  // Set focus and trigger initial search if query exists
-  setTimeout(() => {
-    input.focus();
-    if (input.value) {
-      triggerSearch();
-    }
-  }, 10);
+    // --- 検索ID管理 ---
+    let searchSeq = 0;
+    let currentSearchId = 0;
+
+    // Set focus and trigger initial search if query exists
+    setTimeout(() => {
+      input.focus();
+      if (input.value) {
+        triggerSearch();
+      }
+    }, 10);
 
   // フォーカスが外れたら自動で戻す
   input.addEventListener('blur', () => {
@@ -60,8 +64,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const query = input.value;
     // 英字大文字を含むか判定
     const hasUpper = /[A-Z]/.test(query);
+    searchSeq += 1;
+    currentSearchId = searchSeq;
     vscode.postMessage({
       type: 'search',
+      id: currentSearchId,
       query: query,
       options: {
         case: hasUpper ? true : false
@@ -74,33 +81,32 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('message', event => {
     const msg = event.data;
     console.log('[VSAGLOG][WebView] message received:', msg);
-    if (msg.type === 'result') {
-      if (msg.error) {
-        resultList.innerHTML = `<div style="padding:8px;color:#f55;font-weight:bold;">${msg.error}</div>`;
+
+    // --- 検索ID付きメッセージ対応 ---
+    if (msg.type === 'clearResults') {
+      if (msg.id === currentSearchId) {
         results = [];
-        console.log('[VSAGLOG][WebView] error:', msg.error);
-      } else {
-        results = Array.isArray(msg.results) ? msg.results : [];
-        console.log('[VSAGLOG][WebView] results received:', results);
-        // 全itemsをフラットに展開（itemsがなければスキップ）
         flatHits = [];
-        results.forEach(r => {
-          if (r && Array.isArray(r.items) && r.items.length > 0) {
-            r.items.forEach(item => {
-              flatHits.push({
-                file: r.file,
-                line: item.line,
-                col: item.col,
-                text: item.text
-              });
-            });
-          }
-        });
-        console.log('[VSAGLOG][WebView] flatHits:', flatHits);
+        selectedIdx = 0;
+        currentPage = 0;
+        resultList.innerHTML = '';
+        renderResults();
       }
-      selectedIdx = 0;
-      currentPage = 0;
-      renderResults();
+    } else if (msg.type === 'appendResult') {
+      if (msg.id === currentSearchId && msg.data) {
+        // 1行分のデータを既存整形ロジックでパースしてflatHitsに追加
+        const line = msg.data;
+        const m = line.match(/^(.*?):(\d+):(\d+):(.*)$/);
+        if (m) {
+          flatHits.push({
+            file: m[1],
+            line: Number(m[2]),
+            col: Number(m[3]),
+            text: m[4]
+          });
+        }
+        renderResults();
+      }
     } else if (msg.type === 'selectUp') {
       if (flatHits.length > 0) {
         if (selectedIdx === 0 && currentPage > 0) {
