@@ -2,7 +2,7 @@
   "name": "vscode-rg",
   "displayName": "vscode-rg",
   "description": "vscode-rg is a VSCode extension for fast, keyboard-centric recursive content search (find+grep). Specify a directory and search file contents efficiently with a powerful UI and shortcuts.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "crimair",
   "license": "MIT",
   "repository": {
@@ -149,6 +149,5 @@
     "typescript": "^5.7.2",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4"
-  },
-  "preview": true
+  }
 }
