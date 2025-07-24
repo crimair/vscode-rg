@@ -42,3 +42,20 @@ A VSCode extension providing a powerful buffer search interface with keyboard-ce
 ## License
 
 MIT License
+
+## Install ripgrep
+
+### Windows
+```
+winget install BurntSushi.ripgrep.MSVC
+```
+
+### Linux
+```
+apt install ripgrep
+```
+
+### macOS
+```
+brew install ripgrep
+```

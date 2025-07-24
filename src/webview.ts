@@ -106,7 +106,13 @@ window.addEventListener('DOMContentLoaded', () => {
             text: m[4]
           });
         }
-        renderResults();
+        if (!(window as any).__renderScheduled) {
+          (window as any).__renderScheduled = true;
+          setTimeout(() => {
+            renderResults();
+            (window as any).__renderScheduled = false;
+          }, 0);
+        }
       }
     } else if (msg.type === 'selectUp') {
       if (flatHits.length > 0) {

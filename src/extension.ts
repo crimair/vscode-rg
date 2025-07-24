@@ -107,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         const { spawn } = require('child_process');
-        let rgFlags = ['--vimgrep', '--no-heading', '--color', 'never', '-S', '--regexp'];
+        let rgFlags = ['--vimgrep', '--color', 'never', '-S', '--trim', '-M', '100', '--max-filesize', '1M', '--regexp'];
         const rgCmdArgs = [...rgFlags, query, dir];
         const rgProc = spawn('rg', rgCmdArgs);
 
@@ -118,22 +118,35 @@ export function activate(context: vscode.ExtensionContext) {
 
         rgProc.stdout.setEncoding('utf8');
         let buffer = '';
+        // Maximum number of output lines from rg (configurable, default: 1000)
+        // If the output exceeds this value, the rg process will be killed to prevent memory issues.
+        let maxOutputLines = 1000;
+        if (options && typeof options.maxOutputLines === 'number' && options.maxOutputLines > 0) {
+          maxOutputLines = options.maxOutputLines;
+        }
+        let outputLineCount = 0;
+        let killedForLimit = false;
         rgProc.stdout.on('data', (data: string) => {
           buffer += data;
           let lines = buffer.split('\n');
           buffer = lines.pop() ?? '';
           for (const line of lines) {
             if (!line.trim()) continue;
-            // 整形ロジックは既存と同じ正規表現
-            if (options.snippet && !line.match(/^(.*?):(\d+):(\d+):(.*)$/)) continue;
-            // ファイルパスをdirからの相対パスに変換
+            outputLineCount++;
+            // Format logic (same as before)
             const m = line.match(/^(.*?):(\d+):(\d+):(.*)$/);
             let sendLine = line;
             if (m) {
               const relFile = path.relative(dir, m[1]);
               sendLine = `${relFile}:${m[2]}:${m[3]}:${m[4]}`;
             }
-            panel.webview.postMessage({ type: 'appendResult', id: searchId, data: sendLine });
+            setTimeout(() => {
+              panel.webview.postMessage({ type: 'appendResult', id: searchId, data: sendLine });
+            }, 0);
+            if (outputLineCount >= maxOutputLines && !killedForLimit) {
+              rgProc.kill();
+              killedForLimit = true;
+            }
           }
         });
         rgProc.stdout.on('end', () => {
